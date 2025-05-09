@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OnlyDevs - Private Chat for Designers & Developers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        od: {
+                            primary: '#FF5F5D',
+                            secondary: '#3AAFA9',
+                            dark: '#17252A',
+                            mid: '#2B7A78',
+                            light: '#DEF2F1'
+                        }
+                    },
+                    fontFamily: {
+                        'sans': ['"Space Grotesk"', 'ui-sans-serif', 'system-ui'],
+                        'mono': ['"Fira Code"', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #17252A;
+            color: #DEF2F1;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .od-logo {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .od-logo::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            bottom: -2px;
+            left: 0;
+            background: linear-gradient(90deg, #FF5F5D, #3AAFA9);
+            transform: skewX(-15deg);
+        }
+        
+        .od-badge {
+            background: linear-gradient(135deg, #FF5F5D, #3AAFA9);
+            color: #17252A;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+        
+        .user-avatar {
+            border: 2px solid transparent;
+            background: linear-gradient(#17252A, #17252A) padding-box,
+                        linear-gradient(135deg, #FF5F5D, #3AAFA9) border-box;
+        }
+        
+        .message-bubble {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .message-bubble::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,95,93,0.1), rgba(58,175,169,0.1));
+            z-index: -1;
+        }
+        
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #3AAFA9;
+            border-radius: 50%;
+            margin-right: 4px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-track {
+            background: #17252A;
+        }
+        
+        .scrollbar-custom::-webkit-scrollbar-thumb {
+            background: linear-gradient(#FF5F5D, #3AAFA9);
+            border-radius: 3px;
+        }
+        
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            background-color: rgba(0,0,0,0.3);
+            border-left: 3px solid #3AAFA9;
+        }
+    </style>
+</head>
+<body class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-20 bg-od-dark flex flex-col items-center py-6 border-r border-od-mid">
+        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-od-primary to-od-secondary flex items-center justify-center mb-8">
+            <span class="text-xl font-bold text-od-dark">OD</span>
+        </div>
+        
+        <div class="w-full flex flex-col items-center space-y-6">
+            <div class="w-12 h-12 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary cursor-pointer transition-all">
+                <i class="fas fa-home text-lg"></i>
+            </div>
+            
+            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-od-primary to-od-secondary flex items-center justify-center text-od-dark cursor-pointer">
+                <i class="fas fa-code text-lg"></i>
+            </div>
+            
+            <div class="w-12 h-12 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary cursor-pointer transition-all">
+                <i class="fas fa-palette text-lg"></i>
+            </div>
+        </div>
+        
+        <div class="mt-auto w-full flex flex-col items-center space-y-4">
+            <div class="user-avatar w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-full h-full object-cover" alt="Profile">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contacts Panel -->
+    <div class="w-64 bg-od-dark border-r border-od-mid flex flex-col">
+        <div class="p-6">
+            <h1 class="text-3xl font-bold mb-1 od-logo">OnlyDevs</h1>
+            <p class="text-sm text-od-light opacity-80">The best platform for Designers & Developers.</p>
+        </div>
+        
+        <div class="px-4 mb-4">
+            <div class="relative">
+                <input type="text" placeholder="Search devs..." class="w-full bg-od-mid text-od-light px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-od-primary placeholder-od-light/50">
+                <i class="fas fa-search absolute right-3 top-2.5 text-od-light/50 text-sm"></i>
+            </div>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto scrollbar-custom">
+            <div class="px-4 py-2">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xs font-semibold text-od-light uppercase tracking-wider">Active Connections</h2>
+                    <span class="od-badge">12 Online</span>
+                </div>
+                
+                <div class="space-y-2">
+                    <div class="flex items-center p-3 rounded-lg hover:bg-od-mid/50 cursor-pointer group">
+                        <div class="user-avatar w-10 h-10 rounded-lg mr-3 flex-shrink-0 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/32.jpg" class="w-full h-full object-cover" alt="User">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <p class="text-sm font-medium truncate">Alex Johnson</p>
+                                <p class="text-xs text-od-light/50">10:43 AM</p>
+                            </div>
+                            <p class="text-xs text-od-light/70 truncate">Working on React components</p>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-od-primary ml-2 flex-shrink-0"></div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 rounded-lg bg-od-mid/30 cursor-pointer group">
+                        <div class="user-avatar w-10 h-10 rounded-lg mr-3 flex-shrink-0 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <p class="text-sm font-medium truncate">Sarah Miller</p>
+                                <p class="text-xs text-od-light/50">10:41 AM</p>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <p class="text-xs text-od-light/70 truncate ml-2">Typing...</p>
+                            </div>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-od-secondary ml-2 flex-shrink-0"></div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 rounded-lg hover:bg-od-mid/50 cursor-pointer group">
+                        <div class="user-avatar w-10 h-10 rounded-lg mr-3 flex-shrink-0 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/75.jpg" class="w-full h-full object-cover" alt="User">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <p class="text-sm font-medium truncate">Michael Chen</p>
+                                <p class="text-xs text-od-light/50">9:27 AM</p>
+                            </div>
+                            <p class="text-xs text-od-light/70 truncate">Reviewing PR #1242</p>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-od-primary ml-2 flex-shrink-0"></div>
+                    </div>
+                    
+                    <div class="flex items-center p-3 rounded-lg hover:bg-od-mid/50 cursor-pointer group">
+                        <div class="user-avatar w-10 h-10 rounded-lg mr-3 flex-shrink-0 overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/68.jpg" class="w-full h-full object-cover" alt="User">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-baseline">
+                                <p class="text-sm font-medium truncate">Emma Wilson</p>
+                                <p class="text-xs text-od-light/50">Yesterday</p>
+                            </div>
+                            <p class="text-xs text-od-light/70 truncate">Let's sync on the design system</p>
+                        </div>
+                        <div class="w-2 h-2 rounded-full bg-gray-500 ml-2 flex-shrink-0"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-od-mid">
+            <div class="flex items-center">
+                <div class="user-avatar w-10 h-10 rounded-lg mr-3 overflow-hidden">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-full h-full object-cover" alt="Profile">
+                </div>
+                <div>
+                    <p class="text-sm font-medium">Jessica Parker</p>
+                    <p class="text-xs text-od-light/70">@jessicap_dev</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col bg-od-dark">
+        <!-- Chat Header -->
+        <div class="h-20 border-b border-od-mid flex items-center px-6">
+            <div class="flex items-center">
+                <div class="user-avatar w-12 h-12 rounded-lg mr-4 overflow-hidden">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div>
+                    <h2 class="font-bold flex items-center">
+                        Sarah Miller
+                        <span class="od-badge ml-2">UI/UX</span>
+                    </h2>
+                    <p class="text-xs text-od-light/70 flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-od-secondary mr-2"></span>
+                        Active now on OnlyDevs
+                    </p>
+                </div>
+            </div>
+            
+            <div class="ml-auto flex items-center space-x-4">
+                <button class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fas fa-phone-alt"></i>
+                </button>
+                <button class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fas fa-video"></i>
+                </button>
+                <button class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Messages -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-custom" id="chat-messages">
+            <div class="flex justify-center">
+                <div class="text-xs text-od-light/50 bg-od-mid px-3 py-1 rounded-full">
+                    Today at 10:42 AM
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <div class="user-avatar w-10 h-10 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-baseline mb-1">
+                        <p class="font-bold mr-2">Sarah Miller</p>
+                        <p class="text-xs text-od-light/50">10:43 AM</p>
+                    </div>
+                    <div class="message-bubble p-4 mb-2">
+                        <p class="text-od-light">Hey! I've been working on those UI mockups you requested. Here's a preview:</p>
+                        <div class="mt-3 rounded-lg overflow-hidden border border-od-mid max-w-md">
+                            <img src="https://via.placeholder.com/400x200/3AAFA9/FFFFFF?text=OnlyDevs+UI+Mockup" alt="UI Mockup" class="w-full">
+                        </div>
+                    </div>
+                    <div class="text-xs text-od-light/50 flex items-center space-x-4">
+                        <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-start justify-end">
+                <div class="flex-1 max-w-xl">
+                    <div class="flex items-baseline mb-1 justify-end">
+                        <p class="text-xs text-od-light/50 mr-2">10:45 AM</p>
+                        <p class="font-bold">You</p>
+                    </div>
+                    <div class="message-bubble p-4 mb-2 bg-gradient-to-r from-od-primary/20 to-od-secondary/20">
+                        <p class="text-od-light">This looks amazing! The color scheme is perfect. How did you implement the gradient buttons?</p>
+                    </div>
+                    <div class="text-xs text-od-light/50 flex items-center space-x-4 justify-end">
+                        <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                    </div>
+                </div>
+                <div class="user-avatar w-10 h-10 rounded-lg ml-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-full h-full object-cover" alt="You">
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <div class="user-avatar w-10 h-10 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-baseline mb-1">
+                        <p class="font-bold mr-2">Sarah Miller</p>
+                        <p class="text-xs text-od-light/50">10:47 AM</p>
+                    </div>
+                    <div class="message-bubble p-4 mb-2">
+                        <p class="text-od-light">Here's the code snippet for the gradient button component:</p>
+                        <div class="code-block mt-2 p-3 text-sm rounded">
+                            <pre>.gradient-btn {\n  background: linear-gradient(135deg, #FF5F5D, #3AAFA9);\n  color: white;\n  padding: 0.75rem 1.5rem;\n  border: none;\n  border-radius: 8px;\n}</pre>
+                        </div>
+                    </div>
+                    <div class="text-xs text-od-light/50 flex items-center space-x-4">
+                        <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-start">
+                <div class="user-avatar w-10 h-10 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-baseline mb-1">
+                        <p class="font-bold mr-2">Sarah Miller</p>
+                        <p class="text-xs text-od-light/50">10:48 AM</p>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <p class="text-xs text-od-light/70 ml-2">Sarah is typing on OnlyDevs...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Message Input -->
+        <div class="p-4 border-t border-od-mid">
+            <div class="bg-od-mid rounded-xl p-1.5">
+                <div class="flex items-center px-4 py-2">
+                    <button class="text-od-light/70 hover:text-od-primary mr-3">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <input type="text" placeholder="Code your message to @Sarah..." class="flex-1 bg-transparent focus:outline-none text-od-light placeholder-od-light/50" id="message-input">
+                    <div class="flex items-center space-x-3 ml-3">
+                        <button class="text-od-light/70 hover:text-od-primary">
+                            <i class="fas fa-code"></i>
+                        </button>
+                        <button class="text-od-light/70 hover:text-od-primary">
+                            <i class="far fa-smile"></i>
+                        </button>
+                        <button class="w-8 h-8 rounded-lg bg-gradient-to-r from-od-primary to-od-secondary flex items-center justify-center text-od-dark">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <p class="text-xs text-od-light/50 mt-2 text-center">OnlyDevs — The best platform for Designers & Developers.</p>
+        </div>
+    </div>
+    
+    <!-- User Profile Sidebar -->
+    <div class="w-80 bg-od-dark border-l border-od-mid p-6 overflow-y-auto scrollbar-custom">
+        <div class="flex flex-col items-center mb-8">
+            <div class="user-avatar w-24 h-24 rounded-xl mb-4 overflow-hidden">
+                <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+            </div>
+            <h3 class="font-bold text-xl flex items-center">
+                Sarah Miller
+                <span class="od-badge ml-2">PRO</span>
+            </h3>
+            <p class="text-sm text-od-light/80">UI/UX Designer @ OnlyDevs</p>
+            <p class="text-xs text-od-light/50 mt-1">@sarahm_design</p>
+        </div>
+        
+        <div class="mb-8">
+            <h4 class="text-xs font-bold text-od-light uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-info-circle mr-2"></i> About
+            </h4>
+            <p class="text-sm text-od-light">Specializing in creating beautiful, functional interfaces with a focus on accessibility and user experience. Currently leading design at OnlyDevs.</p>
+        </div>
+        
+        <div class="mb-8">
+            <h4 class="text-xs font-bold text-od-light uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-laptop-code mr-2"></i> Tech Stack
+            </h4>
+            <div class="flex flex-wrap gap-2">
+                <span class="text-xs bg-od-mid text-od-light px-3 py-1 rounded-full">Figma</span>
+                <span class="text-xs bg-od-mid text-od-light px-3 py-1 rounded-full">React</span>
+                <span class="text-xs bg-od-mid text-od-light px-3 py-1 rounded-full">Tailwind</span>
+                <span class="text-xs bg-od-mid text-od-light px-3 py-1 rounded-full">Framer</span>
+                <span class="text-xs bg-od-mid text-od-light px-3 py-1 rounded-full">Three.js</span>
+            </div>
+        </div>
+        
+        <div class="mb-8">
+            <h4 class="text-xs font-bold text-od-light uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-project-diagram mr-2"></i> Current Project
+            </h4>
+            <div class="bg-od-mid/30 p-4 rounded-xl">
+                <div class="flex items-start">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-r from-od-primary to-od-secondary flex items-center justify-center text-od-dark mr-3">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div>
+                        <h5 class="font-medium">OnlyDevs Dashboard Redesign</h5>
+                        <p class="text-xs text-od-light/70 mt-1">Revamping the developer dashboard with new components and improved navigation flow.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <h4 class="text-xs font-bold text-od-light uppercase tracking-wider mb-3 flex items-center">
+                <i class="fas fa-share-alt mr-2"></i> Connect on OnlyDevs
+            </h4>
+            <div class="flex space-x-4">
+                <a href="#" class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fab fa-dribbble"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fab fa-linkedin-in"></i>
+                </a>
+                <a href="#" class="w-10 h-10 rounded-lg bg-od-mid flex items-center justify-center text-od-light hover:bg-od-secondary transition-colors">
+                    <i class="fas fa-globe"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Message functionality
+        const messageInput = document.getElementById('message-input');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && messageInput.value.trim() !== '') {
+                sendMessage();
+            }
+        });
+        
+        document.querySelector('.fa-paper-plane').addEventListener('click', function() {
+            if (messageInput.value.trim() !== '') {
+                sendMessage();
+            }
+        });
+        
+        function sendMessage() {
+            // Create new message element
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start justify-end mt-6';
+            
+            const messageContent = `
+                <div class="flex-1 max-w-xl">
+                    <div class="flex items-baseline mb-1 justify-end">
+                        <p class="text-xs text-od-light/50 mr-2">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                        <p class="font-bold">You</p>
+                    </div>
+                    <div class="message-bubble p-4 mb-2 bg-gradient-to-r from-od-primary/20 to-od-secondary/20">
+                        <p class="text-od-light">${messageInput.value}</p>
+                    </div>
+                    <div class="text-xs text-od-light/50 flex items-center space-x-4 justify-end">
+                        <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                    </div>
+                </div>
+                <div class="user-avatar w-10 h-10 rounded-lg ml-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-full h-full object-cover" alt="You">
+                </div>
+            `;
+            
+            messageDiv.innerHTML = messageContent;
+            chatMessages.appendChild(messageDiv);
+            
+            // Clear input
+            messageInput.value = '';
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Simulate reply after 1-3 seconds
+            setTimeout(() => {
+                simulateReply();
+            }, Math.random() * 2000 + 1000);
+        }
+        
+        function simulateReply() {
+            const replies = [
+                "That's a great question! Let me share the code with you.",
+                "I've pushed the changes to the OnlyDevs design system repo.",
+                "Would you like me to create a Figma component for this?",
+                "Let's schedule a pairing session on OnlyDevs to go through this.",
+                "I've documented this in our OnlyDevs shared knowledge base."
+            ];
+            
+            const randomReply = replies[Math.floor(Math.random() * replies.length)];
+            
+            // Remove typing indicator if it exists
+            const typingIndicator = document.querySelector('.typing-indicator');
+            if (typingIndicator) {
+                typingIndicator.parentElement.parentElement.remove();
+            }
+            
+            // Create reply message
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex items-start mt-6';
+            
+            const messageContent = `
+                <div class="user-avatar w-10 h-10 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-baseline mb-1">
+                        <p class="font-bold mr-2">Sarah Miller</p>
+                        <p class="text-xs text-od-light/50">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                    <div class="message-bubble p-4 mb-2">
+                        <p class="text-od-light">${randomReply}</p>
+                    </div>
+                    <div class="text-xs text-od-light/50 flex items-center space-x-4">
+                        <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                        <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                    </div>
+                </div>
+            `;
+            
+            messageDiv.innerHTML = messageContent;
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Randomly show typing indicator after reply
+            if (Math.random() > 0.5) {
+                setTimeout(() => {
+                    showTypingIndicator();
+                }, 2000);
+            }
+        }
+        
+        function showTypingIndicator() {
+            // Check if typing indicator already exists
+            if (document.querySelector('.typing-indicator')) return;
+            
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'flex items-start mt-6';
+            
+            const typingContent = `
+                <div class="user-avatar w-10 h-10 rounded-lg mr-4 overflow-hidden flex-shrink-0">
+                    <img src="https://randomuser.me/api/portraits/women/12.jpg" class="w-full h-full object-cover" alt="User">
+                </div>
+                <div class="flex-1">
+                    <div class="flex items-baseline mb-1">
+                        <p class="font-bold mr-2">Sarah Miller</p>
+                        <p class="text-xs text-od-light/50">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <p class="text-xs text-od-light/70 ml-2">Sarah is typing on OnlyDevs...</p>
+                    </div>
+                </div>
+            `;
+            
+            typingDiv.innerHTML = typingContent;
+            chatMessages.appendChild(typingDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Remove after 2-5 seconds
+            setTimeout(() => {
+                typingDiv.remove();
+                // 50% chance to send another message
+                if (Math.random() > 0.5) {
+                    simulateReply();
+                }
+            }, Math.random() * 3000 + 2000);
+        }
+        
+        // Initial scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    </script>
+</body>
+</html>

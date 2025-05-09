@@ -1,0 +1,45 @@
+<script>
+    const socket = io();
+
+    // Load existing messages
+    socket.on('loadMessages', (messages) => {
+        messages.forEach(message => {
+            appendMessage(message);
+        });
+    });
+
+    // Listen for new messages
+    socket.on('newMessage', (message) => {
+        appendMessage(message);
+    });
+
+    function appendMessage(message) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'flex items-start justify-end mt-6';
+        
+        const messageContent = `
+            <div class="flex-1 max-w-xl">
+                <div class="flex items-baseline mb-1 justify-end">
+                    <p class="text-xs text-od-light/50 mr-2">${new Date(message.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                    <p class="font-bold">${message.sender}</p>
+                </div>
+                <div class="message-bubble p-4 mb-2 bg-gradient-to-r from-od-primary/20 to-od-secondary/20">
+                    <p class="text-od-light">${message.text}</p>
+                </div>
+                <div class="text-xs text-od-light/50 flex items-center space-x-4 justify-end">
+                    <button class="hover:text-od-primary"><i class="far fa-heart"></i></button>
+                    <button class="hover:text-od-primary"><i class="fas fa-code"></i></button>
+                    <button class="hover:text-od-primary"><i class="fas fa-reply"></i></button>
+                </div>
+            </div>
+            <div class="user-avatar w-10 h-10 rounded-lg ml-4 overflow-hidden flex-shrink-0">
+                <img src="https://randomuser.me/api/portraits/women/44.jpg" class="w-full h-full object-cover" alt="You">
+            </div>
+        `;
+        
+        messageDiv.innerHTML = messageContent;
+        document.getElementById('chat-messages').appendChild(messageDiv);
+        document.getElementById('chat-messages').scrollTop = document.getElementById('chat-messages').scrollHeight;
+    }
+
+    // Message functionality
